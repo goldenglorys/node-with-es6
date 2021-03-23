@@ -19,6 +19,10 @@ app.use(express.urlencoded({ extended: true }));
 // used to package any JSON Payloads sent up in a request from the client onto req.body,
 // while express.urlencoded will package any incoming requests with strings, arrays, or other URL Encoded data onto req.body.
 // In short, both manipulate req.body, but.json() is for JSON Payloads and.urlencoded() is for, among others, POST Query Parameters.
+// Another way of saying this is that incoming requests with a Content-Type: application/json header
+// (such as specifying a POST Body with the fetch API) will be handled by express.json(),
+// while requests with header Content - Type: application / x-www-form-urlencoded(such as HTML Forms)
+// will be handled with express.urlencoded()
 
 app.get("/my-test-route", (undefined, res) => {
   console.log("A GET Request was made to /my-test-route.");
