@@ -19,40 +19,29 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = 3000;
 
 // HTTP POST /books
-app.post("/books", async (req, res) => {
+app.post("/books", async (req, res, next) => {
   try {
     const book = new Book(req.body.book);
     await book.save();
     return res.status(201).send({ book });
   } catch (e) {
-    console.log(e);
-    if (e instanceof mongoose.Error.ValidationError) {
-      return res.status(400).send({ error: "ValidationError" });
-    } else {
-      return res.status(500).send({ error: "Internal Error" });
-    }
+    next(e);
   }
 });
 
 // HTTP GET /books/:id
-app.get("/books/:id", async (req, res) => {
+app.get("/books/:id", async (req, res, next) => {
   try {
     const book = await Book.findById(req.params.id);
-
     if (!book) return res.status(404).send({ error: "Not Found" });
-
     return res.send({ book });
   } catch (e) {
-    if (e instanceof mongoose.Error.CastError) {
-      return res.status(400).send({ error: "Not a valid ID" });
-    } else {
-      return res.status(500).send({ error: "Internal Error" });
-    }
+    next(e);
   }
 });
 
 // HTTP PATCH /books/:id
-app.patch("/books/:id", async (req, res) => {
+app.patch("/books/:id", async (req, res, next) => {
   const { id } = req.params;
   const { updates } = req.body;
 
@@ -61,33 +50,33 @@ app.patch("/books/:id", async (req, res) => {
       runValidators: true,
       new: true,
     });
-
     if (!updatedBook) return res.status(404).send({ error: "Not Found" });
-
     return res.send({ book: updatedBook });
   } catch (e) {
-    if (e instanceof mongoose.Error.CastError) {
-      return res.status(400).send({ error: "Not a valid ID" });
-    } else {
-      return res.status(500).send({ error: "Internal Error" });
-    }
+    next(e);
   }
 });
 
 // HTTP DELETE /books/:id
-app.delete("/books/:id", async (req, res) => {
+app.delete("/books/:id", async (req, res, next) => {
   try {
     const deletedBook = await Book.findByIdAndDelete(req.params.id);
-
     if (!deletedBook) return res.status(404).send({ error: "Not Found" });
-
     return res.send({ book: deletedBook });
   } catch (e) {
-    if (e instanceof mongoose.Error.CastError) {
-      return res.status(400).send({ error: "Not a valid ID" });
-    } else {
-      return res.status(500).send({ error: "Internal Error" });
-    }
+    next(e);
+  }
+});
+
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  if (err instanceof mongoose.Error.ValidationError) {
+    return res.status(400).send({ error: "Validation Error" });
+  } else if (err instanceof mongoose.Error.CastError) {
+    return res.status(400).send({ error: "Not a valid ID" });
+  } else {
+    console.log(err); // Unexpected, so worth logging.
+    return res.status(500).send({ error: "Internal error" });
   }
 });
 
